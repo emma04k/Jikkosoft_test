@@ -1,12 +1,15 @@
 import { Router } from "express";
 import { LibraryController } from "./controller";
+import { LibraryService } from "../../services/LibraryService";
+import { PrismaLibraryRepository } from "../../infrastructure/repositories/PrismaLibraryRepository";
 
 export class LibraryRoutes{
     static  get routes(): Router{
 
         const router = Router();
-
-        const libraryController = new LibraryController();
+        const libraryRepository = new PrismaLibraryRepository();
+        const libraryService = new LibraryService(libraryRepository);
+        const libraryController = new LibraryController(libraryService);
 
         //libraries
         router.get('/', libraryController.getAll);

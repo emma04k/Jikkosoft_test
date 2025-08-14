@@ -1,5 +1,6 @@
 import { IBookRepository } from "../domain/repositories/IBookRepository";
 import { z } from "zod";
+import { CustomError } from "../domain/errors/CustomError";
 
 export const CreateBookInput = z.object({
     title: z.string().min(1),
@@ -30,27 +31,40 @@ export class BookService {
     constructor(private repo: IBookRepository) {}
 
     async create(input: CreateBookDTO) {
-        const data = CreateBookInput.parse(input);
-        return this.repo.create({
-            id: '',
-            title: data.title,
-            author: data.author,
-            isbn: data.isbn,
-            publishedYear: data.publishedYear ?? null,
-            available: data.available ?? true,
-            libraryId: data.libraryId,
-            createdAt: undefined,
-            updatedAt: undefined
-        } as any);
+        try {
+            const data = CreateBookInput.parse(input);
+            return this.repo.create({
+                id: '',
+                title: data.title,
+                author: data.author,
+                isbn: data.isbn,
+                publishedYear: data.publishedYear ?? null,
+                available: data.available ?? true,
+                libraryId: data.libraryId,
+                createdAt: undefined,
+                updatedAt: undefined
+            } as any);
+        }catch ( error ) {
+            throw CustomError.internalServer(`${error}`);
+        }
     }
 
     async delete(input: { id: string }) {
-        const { id } = DeleteBookInput.parse(input);
-        return await this.repo.delete(id);
+        try {
+            const { id } = DeleteBookInput.parse(input);
+            return await this.repo.delete(id);
+        }catch ( error ) {
+            throw CustomError.internalServer();
+        }
     }
 
     async getAll() {
-        return this.repo.getAll();
+        try {
+            return this.repo.getAll();
+        }catch ( error ) {
+            console.log({error});
+            throw CustomError.internalServer();
+        }
     }
 
     async getById(input: { id: string }) {
@@ -59,11 +73,11 @@ export class BookService {
         const found = await this.repo.getById(id);
 
         if (!found) {
-            const err: any = new Error('Book not found');
-            err.status = 404;
-            throw err;
+            throw CustomError.notFound('Book not found');
         }
+
         return found;
+
     }
 
     async update(input: UpdateBookDTO) {
@@ -72,10 +86,9 @@ export class BookService {
         const updated = await this.repo.update(id, data);
 
         if (!updated) {
-            const err: any = new Error('Book not found');
-            err.status = 404;
-            throw err;
+            throw CustomError.notFound('Book not found');
         }
+
         return updated;
     }
 }

@@ -3,6 +3,7 @@ import { Book } from '../../domain/entities/Book';
 import { prisma } from "../../data/postgres";
 
 export class PrismaBookRepository implements IBookRepository {
+
   async create(data: Omit<Book, 'id' | 'createdAt' | 'updatedAt'>): Promise<Book> {
     const created = await prisma.book.create({ data: {
       title: data.title,
