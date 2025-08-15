@@ -107,6 +107,7 @@ export class BookService {
                 borrowed: loan ? true : false, // Si está prestado
                 loanInfo: loan
                     ? {
+                        loanId: loan.id,
                         memberId: loan.memberId, // ID del miembro
                         borrowedAt: loan.borrowedAt, // Fecha de préstamo
                     }

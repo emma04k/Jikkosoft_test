@@ -13,6 +13,7 @@ type Book = {
     available: boolean;
     borrowed: boolean;
     loanInfo: {
+        loanId: string;
         memberId: string;
         borrowedAt: string;
     } | null;
@@ -28,6 +29,7 @@ export default function Books() {
     const [form, setForm] = useState({ title: '', author: '', isbn: '', publishedYear: '', libraryId: '' });
     const [search, setSearch] = useState('');
     const [error, setError] = useState<string>('');
+    const [message, setMessage] = useState<string>('');
     const [modalOpen, setModalOpen] = useState(false); // Modal para crear/editar
     const [loanModalOpen, setLoanModalOpen] = useState(false); // Modal para prestar libro
     const [selectedBook, setSelectedBook] = useState<Book | null>(null); // Libro seleccionado para editar o prestar
@@ -99,15 +101,22 @@ export default function Books() {
     };
 
     const onReturn = async (book: Book) => {
+        if (!book.loanInfo?.loanId){
+            setMessage('El libro no esta prestado');
+            return;
+        }
         try {
-            await api(`/api/loan/return`, { method: 'POST', body: JSON.stringify({ bookId: book.id }) });
+            await api(`/api/loan/${book.loanInfo.loanId}`, { method: 'DELETE'});
             await load();
-            setLoanModalOpen(false); // Cerrar modal de préstamo después de devolver el libro
-        } catch (e: any) { setError(e.message); }
+            setLoanModalOpen(false);
+        } catch (e: any) {
+            console.log({e})
+            setError(e.message); }
     };
 
     const openModal = (book?: Book) => {
         setError('');
+        setMessage('');
         setSelectedBook(book || null);
         setForm({
             title: book?.title || '',
@@ -123,6 +132,7 @@ export default function Books() {
         setSelectedBook(book);
         setLoanModalOpen(true);
         setError('');
+        setMessage('');
     };
 
     const filteredBooks = items.filter((book) =>
@@ -131,7 +141,7 @@ export default function Books() {
 
     const contentForLoanModal = selectedBook && (
         <div>
-            <form onSubmit={onSubmit}>
+            <form onSubmit={(e)=>{e.preventDefault();}}>
                 <select
                     value={selectedMemberId}
                     onChange={e => setSelectedMemberId(e.target.value)}
@@ -247,6 +257,7 @@ export default function Books() {
             )}
 
             {error && <p style={{ color: 'red' }}>{error}</p>}
+            {message && <p style={{ color: 'black' }}>{message}</p>}
         </section>
     );
 }

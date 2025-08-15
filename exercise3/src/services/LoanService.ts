@@ -7,21 +7,29 @@ export const CreateLoanInput = z.object({
     bookId: z.uuid()
 });
 
+export const DeleteLoanInput = z.object({
+    id: z.uuid(),
+});
+
 export class LoanService {
     constructor(private repo: ILoanRepository) {
     }
     async create(input: { memberId: string; bookId: string }) {
+        const loan = await this.repo.getByBookId(input.bookId);
+        if (loan) {
+            throw  CustomError.badRequest("El libro se encuentra prestado")
+        }
+        const data = CreateLoanInput.parse(input);
+        return this.repo.create({
+            id: '',
+            memberId: data.memberId,
+            bookId: data.bookId,
+        } as any);
+    }
 
-            const loan = await this.repo.getByBookId(input.bookId);
-            if (loan) {
-                throw  CustomError.badRequest("El libro se encuentra prestado")
-            }
-            const data = CreateLoanInput.parse(input);
-            return this.repo.create({
-                id: '',
-                memberId: data.memberId,
-                bookId: data.bookId,
-            } as any);
+    async delete(input: { id: string }) {
+        const { id } = DeleteLoanInput.parse(input);
+        return await this.repo.delete(id);
     }
 
 }

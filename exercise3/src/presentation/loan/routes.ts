@@ -18,6 +18,7 @@ export class LoanRoutes{
         //Loan
 
         router.post('/', loanController.create);
+        router.delete('/:id', loanController.delete);
 
         return router;
     }

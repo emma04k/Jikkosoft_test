@@ -20,4 +20,9 @@ export  class LoanController {
             .catch((error) => this.handleError(error,res));
     }
 
+    public delete = (req: Request, res: Response) => {
+        this.loanService.delete({ id: req.params.id })
+            .then((result) => res.status(200).json(result))
+            .catch((error) => this.handleError(error,res));
+    }
 }
