@@ -19,7 +19,7 @@
 6. Execute command ``npx prisma migrate dev --name init``
 7. Execute command ``npm run dev``
 
-### Front
+### Frontend
 1. cd exercise3/web;
 2. Execute command ``npm install``;
 3. Execute command ``npm run dev``
