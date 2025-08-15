@@ -1,6 +1,7 @@
 import { IBookRepository } from "../domain/repositories/IBookRepository";
 import { z } from "zod";
 import { CustomError } from "../domain/errors/CustomError";
+import { ILoanRepository } from "../domain/repositories/ILoanRepository";
 
 export const CreateBookInput = z.object({
     title: z.string().min(1),
@@ -28,7 +29,7 @@ export const GetBookInput = z.object({ id: z.uuid() });
 
 export class BookService {
 
-    constructor(private repo: IBookRepository) {}
+    constructor(private repo: IBookRepository,  private repoLoan :ILoanRepository) {}
 
     async create(input: CreateBookDTO) {
         try {
@@ -50,12 +51,14 @@ export class BookService {
     }
 
     async delete(input: { id: string }) {
-        try {
-            const { id } = DeleteBookInput.parse(input);
-            return await this.repo.delete(id);
-        }catch ( error ) {
-            throw CustomError.internalServer();
+        const { id } = DeleteBookInput.parse(input);
+
+        const loan = await this.repoLoan.getByBookId(id);
+        if (loan) {
+            throw CustomError.badRequest("No se puede eliminar el libro porque se encuentra prestado");
         }
+
+        return await this.repo.delete(id);
     }
 
     async getAll() {
@@ -90,5 +93,28 @@ export class BookService {
         }
 
         return updated;
+    }
+
+    async getBooksWithLoanInfo(){
+        const books = await this.repo.getAll();
+        const loans = await this.repoLoan.getAll();
+
+        const booksWithLoanInfo = books.map((book) => {
+            // Busca el préstamo activo para este libro
+            const loan = loans.find((loan) => loan.bookId === book.id);
+            return {
+                ...book,
+                borrowed: loan ? true : false, // Si está prestado
+                loanInfo: loan
+                    ? {
+                        memberId: loan.memberId, // ID del miembro
+                        borrowedAt: loan.borrowedAt, // Fecha de préstamo
+                    }
+                    : null,
+            };
+        });
+
+        return booksWithLoanInfo;
+
     }
 }

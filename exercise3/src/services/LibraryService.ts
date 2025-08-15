@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ILibraryRepository } from "../domain/repositories/ILibraryRepository";
 import { CustomError } from "../domain/errors/CustomError";
+import { IBookRepository } from "../domain/repositories/IBookRepository";
 
 
 export const CreateLibraryInput = z.object({
@@ -18,7 +19,7 @@ export const DeleteLibraryInput = z.object({ id: z.uuid() });
 export const GetLibraryInput = z.object({ id: z.uuid() });
 
 export class LibraryService {
-    constructor(private repo: ILibraryRepository) {}
+    constructor(private repo: ILibraryRepository, private repoBook : IBookRepository) {}
 
     async create(input: { name: string; address?: string }) {
         try{
@@ -36,12 +37,12 @@ export class LibraryService {
     }
 
     async delete(input: { id: string }) {
-        try {
-            const { id } = DeleteLibraryInput.parse(input);
-            return await this.repo.delete(id);
-        }catch ( error ){
-            throw CustomError.internalServer(`${error}`);
+        const { id } = DeleteLibraryInput.parse(input);
+        const book = await this.repoBook.getByLibraryId(id);
+        if(book){
+            throw CustomError.badRequest("No se puede eliminar la biblioteca porque tiene libros asociados")
         }
+        return await this.repo.delete(id);
     }
 
     async getById(input: { id: string }) {

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../components/api';
+import GenericModal from '../components/GenericModal';
 import '../styles/App.css';
 
 type Book = {
@@ -10,7 +11,11 @@ type Book = {
     publishedYear?: string | null;
     libraryId: string;
     available: boolean;
-    borrowedBy?: string; // Información del miembro que lo ha prestado
+    borrowed: boolean;
+    loanInfo: {
+        memberId: string;
+        borrowedAt: string;
+    } | null;
 };
 
 type Library = { id: string; name: string };
@@ -24,14 +29,16 @@ export default function Books() {
     const [search, setSearch] = useState('');
     const [error, setError] = useState<string>('');
     const [modalOpen, setModalOpen] = useState(false); // Modal para crear/editar
+    const [loanModalOpen, setLoanModalOpen] = useState(false); // Modal para prestar libro
     const [selectedBook, setSelectedBook] = useState<Book | null>(null); // Libro seleccionado para editar o prestar
+    const [selectedMemberId, setSelectedMemberId] = useState<string>(''); // ID del miembro seleccionado para préstamo
 
     const load = async () => {
         try {
             const [books, libs, mems] = await Promise.all([
-                api<Book[]>('/api/book'),
+                api<Book[]>('/api/book/full'),
                 api<Library[]>('/api/library'),
-                api<Member[]>('/api/member') // Suponiendo que tienes un endpoint para obtener miembros
+                api<Member[]>('/api/member') // Obtener los miembros
             ]);
             setItems(books);
             setLibraries(libs);
@@ -40,6 +47,14 @@ export default function Books() {
     };
 
     useEffect(() => { load() }, []);
+
+    useEffect(() => {
+        if (selectedBook && selectedBook.loanInfo?.memberId) {
+            setSelectedMemberId(selectedBook.loanInfo.memberId);
+        } else {
+            setSelectedMemberId('');
+        }
+    }, [selectedBook]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,15 +85,29 @@ export default function Books() {
     };
 
     const onBorrow = async (book: Book) => {
-        if (!book.available) return;
+        if (!selectedMemberId) {
+            return;
+        }
 
         try {
-            await api(`/api/loans/borrow`, { method: 'POST', body: JSON.stringify({ bookId: book.id, memberId: 'member-id-example' }) });
+            await api(`/api/loan`, { method: 'POST', body: JSON.stringify({ bookId: book.id, memberId: selectedMemberId }) });
             await load();
+            setLoanModalOpen(false); // Cerrar modal de préstamo después de realizar el préstamo
+        } catch (e: any) {
+            setError(e.message);
+        }
+    };
+
+    const onReturn = async (book: Book) => {
+        try {
+            await api(`/api/loan/return`, { method: 'POST', body: JSON.stringify({ bookId: book.id }) });
+            await load();
+            setLoanModalOpen(false); // Cerrar modal de préstamo después de devolver el libro
         } catch (e: any) { setError(e.message); }
     };
 
     const openModal = (book?: Book) => {
+        setError('');
         setSelectedBook(book || null);
         setForm({
             title: book?.title || '',
@@ -90,8 +119,34 @@ export default function Books() {
         setModalOpen(true);
     };
 
+    const openLoanModal = (book: Book) => {
+        setSelectedBook(book);
+        setLoanModalOpen(true);
+        setError('');
+    };
+
     const filteredBooks = items.filter((book) =>
         book.title.toLowerCase().includes(search.toLowerCase()) || book.author.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const contentForLoanModal = selectedBook && (
+        <div>
+            <form onSubmit={onSubmit}>
+                <select
+                    value={selectedMemberId}
+                    onChange={e => setSelectedMemberId(e.target.value)}
+                    required
+                    disabled={selectedBook.loanInfo !== null} // Deshabilitar si ya está prestado
+                >
+                    <option value="">Seleccione miembro</option>
+                    {members.map(member => (
+                        <option key={member.id} value={member.id}>{member.name}</option>
+                    ))}
+                </select>
+                <button onClick={() => onBorrow(selectedBook!)}>Prestar</button>
+                <button onClick={() => onReturn(selectedBook!)}>Devolver</button>
+            </form>
+        </div>
     );
 
     return (
@@ -130,19 +185,15 @@ export default function Books() {
                         <td>{book.publishedYear}</td>
                         <td>
                             <button onClick={() => openModal(book)}>Editar</button>
-                            <button  className="delete-button" onClick={() => onDelete(book.id)}>Borrar</button>
-                            {book.available ? (
-                                <button onClick={() => onBorrow(book)}>Prestar</button>
-                            ) : (
-                                <button disabled>Prestado</button>
-                            )}
+                            <button className="delete-button" onClick={() => onDelete(book.id)}>Borrar</button>
+                            <button onClick={() => openLoanModal(book)}>Prestar</button>
                         </td>
                     </tr>
                 ))}
                 </tbody>
             </table>
 
-            {/* Modal */}
+            {/* Modal para Crear/Editar Libro */}
             {modalOpen && (
                 <div className="modal">
                     <h3>{selectedBook ? 'Editar Libro' : 'Crear Libro'}</h3>
@@ -182,6 +233,17 @@ export default function Books() {
                         <button onClick={() => setModalOpen(false)}>Cancelar</button>
                     </form>
                 </div>
+            )}
+
+            {/* Modal de préstamo */}
+            {loanModalOpen && (
+                <GenericModal
+                    title={`Prestar Libro - ${selectedBook?.title}`}
+                    content={contentForLoanModal}
+                    onClose={() => setLoanModalOpen(false)}
+                    submitLabel="Cancelar"
+                />
+
             )}
 
             {error && <p style={{ color: 'red' }}>{error}</p>}

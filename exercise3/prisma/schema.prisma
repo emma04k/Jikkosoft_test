@@ -33,6 +33,7 @@ model Book {
   library       Library  @relation(fields: [libraryId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  Loan          Loan[]
 }
 
 model Member {
@@ -41,4 +42,15 @@ model Member {
   email     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Loan      Loan[]
+}
+
+model Loan {
+  id         String    @id @default(uuid())
+  memberId   String
+  bookId     String
+  borrowedAt DateTime  @default(now()) // Fecha de préstamo
+  returnedAt DateTime? // Fecha de devolución
+  member     Member    @relation(fields: [memberId], references: [id])
+  book       Book      @relation(fields: [bookId], references: [id])
 }

@@ -71,18 +71,18 @@ tr:hover {
     border-radius: 4px;
 }
 
-.modal button {
+.modal-button {
     background-color: #4CAF50;
     color: white;
     cursor: pointer;
     border: none;
 }
 
-.modal button:hover {
+.modal-button:hover {
     background-color: #45a049;
 }
 
-.modal button:disabled {
+.modal-button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
@@ -138,4 +138,19 @@ p {
 .delete-button:disabled {
     background-color: #ddd;
     cursor: not-allowed;
+}
+
+.button-close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #f44336; /* Rojo */
+    border: none;
+    font-size: 100px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.button-close:hover {
+    background-color: #e53935;
 }

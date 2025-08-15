@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { IMemberRepository } from "../domain/repositories/IMemberRepository";
 import { CustomError } from "../domain/errors/CustomError";
+import { IBookRepository } from "../domain/repositories/IBookRepository";
+import { ILoanRepository } from "../domain/repositories/ILoanRepository";
 
 
 export const CreateMemberInput = z.object({
@@ -19,7 +21,7 @@ export const GetMemberInput = z.object({ id: z.uuid() });
 
 
 export class MemberService {
-    constructor(private repo: IMemberRepository) {}
+    constructor(private repo: IMemberRepository, private loanRepo: ILoanRepository) {}
 
     async create(input: { name: string; email: string }) {
        try {
@@ -37,12 +39,14 @@ export class MemberService {
     }
 
     async delete(input: { id: string }) {
-        try{
-            const { id } = DeleteMemberInput.parse(input);
-            return await this.repo.delete(id);
-        }catch ( error ) {
-            throw CustomError.internalServer(`${error}`);
+
+        const { id } = DeleteMemberInput.parse(input);
+        const loan = await this.loanRepo.getByMemberId(id)
+        if (loan) {
+            throw CustomError.badRequest("No puedes eliminar al miembro porque tiene libro/s prestado/s");
         }
+        return await this.repo.delete(id);
+
     }
 
     async getById(input: { id: string }) {

@@ -6,4 +6,6 @@ export interface IBookRepository {
   getAll(): Promise<Book[]>;
   update(id: string, data: Partial<Omit<Book, 'id'>>): Promise<Book | null>;
   delete(id: string): Promise<Book>;
+  getByLibraryId(libraryId: string): Promise<Book | null>;
+
 }

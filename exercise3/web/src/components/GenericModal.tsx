@@ -10,26 +10,14 @@ interface GenericModalProps {
     customClass?: string;
 }
 
-const GenericModal: React.FC<GenericModalProps> = ({ title, content, onClose, onSubmit, submitLabel, customClass }) => {
+const GenericModal: React.FC<GenericModalProps> = ({ title, content, onClose}) => {
     return (
         <>
-            <div onClick={onClose}></div>
-
-            <div>
+            <div className="modal">
+                <button className="button-close" onClick={onClose}>X</button>
                 <h3>{title}</h3>
                 <div>
                     {content}
-                </div>
-
-                <div >
-                    {onSubmit && submitLabel && (
-                        <button
-                                onClick={onSubmit}>{submitLabel}
-                        </button>
-                    )}
-                    <button onClick={onClose}>
-                        Cerrar
-                    </button>
                 </div>
             </div>
         </>

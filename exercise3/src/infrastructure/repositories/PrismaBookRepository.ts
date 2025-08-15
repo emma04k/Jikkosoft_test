@@ -1,6 +1,7 @@
 import { IBookRepository } from '../../domain/repositories/IBookRepository';
 import { Book } from '../../domain/entities/Book';
 import { prisma } from "../../data/postgres";
+import { Library } from "../../domain/entities/Library";
 
 export class PrismaBookRepository implements IBookRepository {
 
@@ -34,5 +35,10 @@ export class PrismaBookRepository implements IBookRepository {
   async delete(id: string): Promise<Book> {
     const item = await prisma.book.delete({ where: { id } });
     return item as unknown as Book;
+  }
+
+  async getByLibraryId(libraryId: string): Promise<Book | null>{
+    const item = await prisma.book.findFirst({ where: { libraryId: libraryId } });
+    return item as unknown as Book | null;
   }
 }
