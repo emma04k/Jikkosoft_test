@@ -39,7 +39,7 @@ export class MemberService {
     async delete(input: { id: string }) {
         try{
             const { id } = DeleteMemberInput.parse(input);
-            await this.repo.delete(id);
+            return await this.repo.delete(id);
         }catch ( error ) {
             throw CustomError.internalServer(`${error}`);
         }

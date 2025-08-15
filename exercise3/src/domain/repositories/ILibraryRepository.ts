@@ -5,5 +5,5 @@ export interface ILibraryRepository {
   getById(id: string): Promise<Library | null>;
   getAll(): Promise<Library[]>;
   update(id: string, data: Partial<Omit<Library, 'id'>>): Promise<Library | null>;
-  delete(id: string): Promise<void>;
+  delete(id: string): Promise<Library>;
 }

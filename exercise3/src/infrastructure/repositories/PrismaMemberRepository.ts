@@ -26,7 +26,8 @@ export class PrismaMemberRepository implements IMemberRepository {
       return null;
     }
   }
-  async delete(id: string): Promise<void> {
-    await prisma.member.delete({ where: { id } });
+  async delete(id: string): Promise<Member> {
+   const item =  await prisma.member.delete({ where: { id } });
+   return item as unknown as Member;
   }
 }

@@ -1,6 +1,7 @@
 import { ILibraryRepository } from '../../domain/repositories/ILibraryRepository';
 import { Library } from '../../domain/entities/Library';
 import { prisma } from "../../data/postgres";
+import { Book } from "../../domain/entities/Book";
 
 export class PrismaLibraryRepository implements ILibraryRepository {
   async create(data: Omit<Library, 'id' | 'createdAt' | 'updatedAt'>): Promise<Library> {
@@ -26,7 +27,8 @@ export class PrismaLibraryRepository implements ILibraryRepository {
       return null;
     }
   }
-  async delete(id: string): Promise<void> {
-    await prisma.library.delete({ where: { id } });
+  async delete(id: string): Promise<Library> {
+    const item = await prisma.library.delete({ where: { id } });
+    return item as unknown as Library;
   }
 }

@@ -5,5 +5,5 @@ export interface IMemberRepository {
   getById(id: string): Promise<Member | null>;
   getAll(): Promise<Member[]>;
   update(id: string, data: Partial<Omit<Member, 'id'>>): Promise<Member | null>;
-  delete(id: string): Promise<void>;
+  delete(id: string): Promise<Member>;
 }
