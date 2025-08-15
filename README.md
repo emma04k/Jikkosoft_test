@@ -16,7 +16,7 @@
 3. Have Docker Desktop installed
 4. Execute command ``docker compose up -d``
 5. Execute command ``npx prisma generate``
-6. Execute command ``prisma migrate dev --name init``
+6. Execute command ``npx prisma migrate dev --name init``
 7. Execute command ``npm run dev``
 
 ### Front
